@@ -1,5 +1,11 @@
 # EduGuard dataset management (Member 2)
 
+## Member 4 analytics
+
+Open `/analytics` from the dataset-management navigation for the dashboard covering model comparisons, cluster analysis, PCA, feature importance, individual explanations, and downloadable reports. The analytics API endpoints are listed in [`member4_analytics/README.md`](member4_analytics/README.md).
+
+The module reads `combined_student_dropout_dataset.csv`, `student_risk_predictions.csv`, `model_comparison.csv`, and optionally `cross_validation_results.csv` from the folder selected by `MEMBER4_DATA_DIR`. Keep generated output files out of Git; configure that path in each local environment.
+
 This module provides CSV upload and validation, metadata and preview APIs, source-aware schema harmonisation, row-wise concatenation, export, and a leakage-aware preprocessing entry point. The brief cites [Kaggle's Student dropout prediction dataset](https://www.kaggle.com/datasets/meharshanali/student-dropout-prediction-dataset) (10,000 synthetic records) and [UCI dataset 697](https://archive.ics.uci.edu/dataset/697/predict%2Bstudents%2Bdropout%2Band%2Bacademic%2Bsuccess) (4,424 Portuguese higher-education records, three classes). `download_datasets.py` downloads both and writes `data/raw/inspection_report.json` with observed columns and label counts. Kaggle access may require account consent/credentials.
 
 ## Run locally

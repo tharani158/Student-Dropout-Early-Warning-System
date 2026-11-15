@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10181d">
+  <title>Dropout Analytics | EduGuard</title>
+  <link rel="stylesheet" href="/member4/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview" aria-label="EduGuard home"><span class="brand-mark">E</span><span>EduGuard<small>STUDENT SUCCESS</small></span></a>
+      <div class="nav-caption">WORKSPACE</div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-page="overview"><span class="nav-icon">◫</span>Overview</button>
+        <button class="nav-item" data-page="models"><span class="nav-icon">⌁</span>Model comparison</button>
+        <button class="nav-item" data-page="clusters"><span class="nav-icon">◌</span>Clustering</button>
+        <button class="nav-item" data-page="pca"><span class="nav-icon">⦿</span>PCA explorer</button>
+        <button class="nav-item" data-page="explain"><span class="nav-icon">✳</span>Explain a prediction</button>
+        <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span>Reports</button>
+      </nav>
+      <div class="sidebar-foot"><span class="status-dot"></span><span>Analytics API <b id="api-status">Connecting</b></span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="crumb">Student success <span>/</span> <b id="crumb-page">Overview</b></div>
+        <div class="top-actions"><span class="live-label"><i></i> LIVE DATA</span><button class="icon-button" id="refresh-button" title="Refresh dashboard" aria-label="Refresh dashboard">↻</button><div class="avatar">M4</div></div>
+      </header>
+
+      <section class="page active" id="page-overview">
+        <div class="page-heading"><div><p class="eyebrow">MEMBER 4 · ANALYTICS</p><h1>Student success overview</h1><p class="subtitle">A clear view of dropout patterns, model performance, and student risk.</p></div><span class="data-chip">Combined dataset · <b id="dataset-count-chip">Loading</b></span></div>
+        <div class="notice" id="global-error" role="status" hidden></div>
+        <div class="metric-grid">
+          <article class="metric-card"><div class="metric-top"><span>Total records</span><span class="metric-glyph blue">▤</span></div><strong id="record-count">—</strong><small>Combined Kaggle + UCI rows</small></article>
+          <article class="metric-card"><div class="metric-top"><span>Recorded dropouts</span><span class="metric-glyph coral">↘</span></div><strong id="dropout-rate">—</strong><small><b id="dropout-count">—</b> students in the dataset</small></article>
+          <article class="metric-card"><div class="metric-top"><span>Best ROC AUC</span><span class="metric-glyph violet">⌁</span></div><strong id="best-auc">—</strong><small id="best-model">From saved model comparison</small></article>
+          <article class="metric-card"><div class="metric-top"><span>Duplicate records</span><span class="metric-glyph amber">⧉</span></div><strong id="duplicate-count">—</strong><small id="missing-caption">Missing values across dataset</small></article>
+        </div>
+        <div class="content-grid overview-grid">
+          <article class="panel span-2"><div class="panel-heading"><div><h2>Prediction risk distribution</h2><p>Saved student prediction output, grouped by risk band</p></div><span class="panel-tag">2,726 predictions</span></div><div id="risk-chart" class="chart-area"></div><div class="legend"><span><i class="legend-dot low"></i>Low risk</span><span><i class="legend-dot medium"></i>Medium risk</span><span><i class="legend-dot high"></i>High risk</span></div></article>
+          <article class="panel"><div class="panel-heading"><div><h2>Outcome balance</h2><p>Recorded combined target labels</p></div></div><div id="class-chart" class="chart-area"></div></article>
+          <article class="panel"><div class="panel-heading"><div><h2>Data sources</h2><p>Rows contributed by each source</p></div></div><div id="source-chart" class="chart-area"></div></article>
+          <article class="panel span-2"><div class="panel-heading"><div><h2>Model performance snapshot</h2><p>ROC AUC across the saved model comparison</p></div><button class="text-button" data-jump="models">View all models <span>→</span></button></div><div id="overview-model-chart" class="bar-chart"></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="page-models">
+        <div class="page-heading"><div><p class="eyebrow">SUPERVISED MODEL REVIEW</p><h1>Model comparison</h1><p class="subtitle">Compare saved holdout metrics with cross-validation results.</p></div><label class="select-label">Chart metric<select id="metric-select"><option>ROC AUC</option><option>F1 Score</option><option>Recall</option><option>Precision</option><option>Accuracy</option><option>PR AUC</option><option>MCC</option></select></label></div>
+        <div class="content-grid"><article class="panel span-2"><div class="panel-heading"><div><h2>Model scores</h2><p>Holdout scores are read from the supplied comparison CSV</p></div><span class="panel-tag">8 models</span></div><div id="model-chart" class="bar-chart tall"></div></article><article class="panel span-2"><div class="panel-heading"><div><h2>Full evaluation table</h2><p>Accuracy, precision, recall, F1, ROC AUC, PR AUC, and MCC</p></div></div><div class="table-wrap"><table id="metrics-table"><thead></thead><tbody></tbody></table></div></article><article class="panel span-2"><div class="panel-heading"><div><h2>Cross-validation results</h2><p>Mean scores across the saved validation folds</p></div></div><div class="table-wrap"><table id="cv-table"><thead></thead><tbody></tbody></table></div></article><article class="panel span-2"><div class="panel-heading"><div><h2>Feature importance</h2><p id="importance-method">Loading available model analysis</p></div></div><div id="importance-chart" class="bar-chart"></div><p class="method-note" id="importance-note"></p></article></div>
+      </section>
+
+      <section class="page" id="page-clusters">
+        <div class="page-heading"><div><p class="eyebrow">UNSUPERVISED LEARNING</p><h1>Cluster profiles</h1><p class="subtitle">Compare student groups across K-Means, Ward, and Gaussian mixture models.</p></div><button class="primary-button" id="reload-clusters">Recompute clusters</button></div>
+        <div class="notice subtle">Clusters are fit on student features only. Target and source are added after fitting to summarize outcomes and dataset composition.</div>
+        <div class="metric-grid compact-grid"><article class="metric-card"><div class="metric-top"><span>Fit sample</span><span class="metric-glyph blue">◌</span></div><strong id="cluster-sample">—</strong><small id="cluster-sample-caption">Rows used for this analysis</small></article><article class="metric-card"><div class="metric-top"><span>Algorithms</span><span class="metric-glyph violet">⌘</span></div><strong>3</strong><small>K-Means · Ward · GMM</small></article><article class="metric-card"><div class="metric-top"><span>Selected clusters</span><span class="metric-glyph teal">⦿</span></div><strong id="selected-k">—</strong><small>Highest silhouette among candidates</small></article></div>
+        <article class="panel cluster-count-panel"><div class="panel-heading"><div><h2>Cluster-count selection</h2><p>Inertia shows the elbow trend; silhouette and Davies-Bouldin help assess separation and compactness.</p></div></div><div id="cluster-count-chart" class="bar-chart"></div></article>
+        <div id="cluster-panels" class="content-grid"></div>
+      </section>
+
+      <section class="page" id="page-pca">
+        <div class="page-heading"><div><p class="eyebrow">DIMENSION REDUCTION</p><h1>PCA explorer</h1><p class="subtitle">Explore a two-dimensional projection of the encoded student features.</p></div><div class="select-label">Color points by<select id="pca-color"><option value="target">Dropout outcome</option><option value="source">Dataset source</option></select></div></div>
+        <div class="metric-grid compact-grid"><article class="metric-card"><div class="metric-top"><span>PC1 variance</span><span class="metric-glyph blue">◒</span></div><strong id="pc1-variance">—</strong><small>Explained variance ratio</small></article><article class="metric-card"><div class="metric-top"><span>PC2 variance</span><span class="metric-glyph violet">◓</span></div><strong id="pc2-variance">—</strong><small>Explained variance ratio</small></article><article class="metric-card"><div class="metric-top"><span>Points shown</span><span class="metric-glyph teal">⦿</span></div><strong id="pca-point-count">—</strong><small>Reproducible sample projection</small></article></div>
+        <article class="panel"><div class="panel-heading"><div><h2>Student feature projection</h2><p>Each point represents a sampled record; overlapping points are expected.</p></div></div><div id="pca-chart" class="pca-chart"></div><div id="pca-legend" class="legend"></div></article>
+        <p class="method-note">PCA is descriptive. Separation in two components does not establish that a feature causes dropout or that an individual can be classified from this plot.</p>
+      </section>
+
+      <section class="page" id="page-explain">
+        <div class="page-heading"><div><p class="eyebrow">EXPLAINABLE AI</p><h1>Explain a prediction</h1><p class="subtitle">Inspect one saved prediction and request SHAP values where the model runtime supports them.</p></div></div>
+        <div class="content-grid"><article class="panel span-2"><div class="panel-heading"><div><h2>Choose a prediction</h2><p>Record IDs refer to row order in student_risk_predictions.csv, starting at 0.</p></div><span class="panel-tag">2,726 saved predictions</span></div><div class="explain-controls"><label>Prediction record ID<input id="record-id" type="number" min="0" max="2725" value="0"></label><label>Model<select id="explain-model"><option value="xgboost">XGBoost</option><option value="lightgbm">LightGBM</option></select></label><button class="primary-button" id="explain-button">Explain prediction</button></div><div id="explain-result" class="explain-result empty-state">Select a record and request its explanation.</div></article><article class="panel span-2"><div class="panel-heading"><div><h2>Student risk records</h2><p>First 12 rows from the saved predictions output</p></div></div><div class="table-wrap"><table id="prediction-table"><thead></thead><tbody></tbody></table></div></article></div>
+      </section>
+
+      <section class="page" id="page-reports">
+        <div class="page-heading"><div><p class="eyebrow">EXPORTS</p><h1>Reports</h1><p class="subtitle">Download a reproducible snapshot of dataset, model, quality, and cluster summaries.</p></div></div>
+        <div class="content-grid"><article class="panel report-card"><span class="report-icon blue">▤</span><h2>Analytics report · JSON</h2><p>Summary metrics, model comparison, quality profile, and clustering results in a machine-readable format.</p><a class="primary-button link-button" href="/api/analytics/report?format=json">Download JSON report</a></article><article class="panel report-card"><span class="report-icon violet">▦</span><h2>Analytics report · CSV</h2><p>Flat metric rows suitable for spreadsheet review and inclusion in the project report.</p><a class="secondary-button link-button" href="/api/analytics/report?format=csv">Download CSV report</a></article><article class="panel span-2"><div class="panel-heading"><div><h2>Report contents</h2><p>Generated from the project's current output files</p></div></div><div class="report-list"><div><b>01</b><span><strong>Dataset snapshot</strong><small>Rows, source split, target distribution, missingness, duplicates</small></span></div><div><b>02</b><span><strong>Model evaluation</strong><small>Holdout and cross-validation metrics for the saved model comparison</small></span></div><div><b>03</b><span><strong>Unsupervised analysis</strong><small>K-Means, Ward hierarchical, Gaussian mixture profile summaries</small></span></div></div><p class="method-note">Download dates use UTC. Values describe the supplied artifacts and are not independent validation of model performance.</p></article></div>
+      </section>
+
+      <footer class="app-footer"><span>EduGuard · Analytics workspace</span><span>For project analysis and demonstration</span></footer>
+    </main>
+  </div>
+  <script src="/member4/static/app.js?v=20261115-categorical-normalization" defer></script>
+</body>
+</html>
