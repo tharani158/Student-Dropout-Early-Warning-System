@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import joblib
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -57,6 +58,8 @@ def split_and_transform(csv_path: Path, target: str, output_dir: Path, test_size
     if source_train is not None:
         pd.DataFrame({"source": source_train}).to_csv(output_dir / "source_train.csv", index=False)
         pd.DataFrame({"source": source_test}).to_csv(output_dir / "source_test.csv", index=False)
+    # Persist fitted preprocessor pipeline for inference
+    joblib.dump(prep, output_dir / "preprocessor.joblib")
     return {"train_rows": len(X_train), "test_rows": len(X_test), "features_after_encoding": len(prep.get_feature_names_out()),
             "target": target, "source_excluded_from_model_features": source is not None,
             "preprocessor": prep}
