@@ -17,6 +17,9 @@ from pipeline import (
     inspect_dataframe, load_dataset, validate_upload,
 )
 from member4_analytics.main import router as member4_analytics_router
+from profiling import profile_dataframe
+from feature_groups import feature_groups
+from storage import read_state, write_state
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = DATA_DIR / "uploads"
@@ -30,13 +33,23 @@ app.include_router(member4_analytics_router)
 
 
 def read_metadata() -> dict[str, Any]:
-    if not META_FILE.exists():
-        return {"datasets": []}
-    return json.loads(META_FILE.read_text(encoding="utf-8"))
+    return read_state(META_FILE)
 
 
 def write_metadata(payload: dict[str, Any]) -> None:
-    META_FILE.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    write_state(META_FILE, payload)
+
+
+def _public(item: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in item.items() if k != "path"}
+
+
+def _activity(kind: str, description: str) -> None:
+    state = read_metadata()
+    state.setdefault("activities", []).insert(0, {"kind": kind, "description": description,
+        "at": pd.Timestamp.now("UTC").isoformat()})
+    state["activities"] = state["activities"][:50]
+    write_metadata(state)
 
 
 @app.get("/")
@@ -52,7 +65,67 @@ def health() -> dict[str, str]:
 @app.get("/api/datasets")
 def list_datasets() -> dict[str, Any]:
     payload = read_metadata()
-    return {"datasets": [{k: v for k, v in item.items() if k != "path"} for item in payload["datasets"]]}
+    return {"datasets": [_public(item) for item in payload["datasets"]]}
+
+
+@app.get("/api/dashboard/summary")
+def dashboard_summary() -> dict[str, Any]:
+    state = read_metadata()
+    datasets = state["datasets"]
+    distributions = {}
+    for item in datasets:
+        frame = load_dataset(Path(item["path"]))
+        report = profile_dataframe(frame)
+        distributions[item["id"]] = report["class_distribution"]
+    return {"dataset_count": len(datasets), "total_records": sum(x["rows"] for x in datasets),
+            "total_features": sum(x["columns"] for x in datasets),
+            "missing_values": sum(x["validation"]["missing_cells"] for x in datasets),
+            "datasets": [{"id": x["id"], "filename": x["filename"], "source": x["source"],
+                          "rows": x["rows"], "columns": x["columns"], "uploaded_at": x["uploaded_at"],
+                          "missing_values": x["validation"]["missing_cells"],
+                          "duplicate_rows": x["validation"]["duplicate_rows"],
+                          "class_distribution": distributions[x["id"]]} for x in datasets],
+            "recent_activities": state.get("activities", [])[:10]}
+
+
+@app.post("/api/activities/model")
+def record_model_activity(body: dict[str, Any]) -> dict[str, Any]:
+    """Let the model-training module report a completed run to the dashboard."""
+    model = str(body.get("model", "")).strip()
+    status = str(body.get("status", "")).strip()
+    if not model or len(model) > 80 or status not in {"trained", "evaluated", "failed"}:
+        raise HTTPException(status_code=422, detail="Provide a model name (1–80 chars) and status: trained, evaluated, or failed.")
+    _activity("model", f"{model}: {status}")
+    return {"status": "recorded"}
+
+
+@app.get("/api/datasets/{dataset_id}/profile")
+def dataset_profile(dataset_id: str, target: str | None = None) -> dict[str, Any]:
+    item = _get_dataset(dataset_id)
+    try:
+        return profile_dataframe(load_dataset(Path(item["path"])), target)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/datasets/{dataset_id}/statistics")
+def dataset_statistics(dataset_id: str) -> dict[str, Any]:
+    return dataset_profile(dataset_id)
+
+
+@app.get("/api/datasets/{dataset_id}/class-distribution")
+def class_distribution(dataset_id: str, target: str | None = None) -> dict[str, Any]:
+    profile = dataset_profile(dataset_id, target)
+    return {"target_column": profile["target_column"], "classes": profile["class_distribution"]}
+
+
+@app.get("/api/datasets/{dataset_id}/feature-groups")
+def dataset_feature_groups(dataset_id: str) -> dict[str, Any]:
+    item = _get_dataset(dataset_id)
+    try:
+        return feature_groups(load_dataset(Path(item["path"])), item["source"])
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.post("/api/datasets/upload")
@@ -69,8 +142,9 @@ async def upload_dataset(file: UploadFile = File(...), source: str = "unspecifie
         metadata = dataset_metadata(dataset_id, file.filename or "dataset.csv", source, path, len(data), frame, result)
         state = read_metadata()
         state["datasets"].append(metadata)
+        state.setdefault("activities", []).insert(0, {"kind": "upload", "description": f"Uploaded {metadata['filename']}", "at": metadata["uploaded_at"]})
         write_metadata(state)
-        return metadata
+        return _public(metadata)
     except DatasetError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
@@ -104,6 +178,7 @@ def integrate(body: dict[str, Any]) -> dict[str, Any]:
         out = DATA_DIR / "processed" / f"integrated_{uuid.uuid4().hex[:8]}.csv"
         out.parent.mkdir(parents=True, exist_ok=True)
         result["data"].to_csv(out, index=False)
+        _activity("integration", f"Integrated {len(ids)} dataset(s) into {out.name}")
         return {"status": "complete", "download_url": f"/api/exports/{out.name}", "rows": len(result["data"]), "columns": list(result["data"].columns), "mapping": result["mapping"], "statistics": result["statistics"], "target_mode": target_mode}
     except (DatasetError, FileNotFoundError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

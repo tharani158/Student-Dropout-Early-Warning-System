@@ -69,7 +69,8 @@ class PipelineTests(unittest.TestCase):
         base_dir = Path(__file__).resolve().parent.parent
         mapping_file = base_dir / "config" / "feature_mapping.json"
         kaggle_csv = base_dir / "data" / "raw" / "kaggle_synthetic.csv"
-        self.assertTrue(kaggle_csv.exists(), "data/raw/kaggle_synthetic.csv does not exist")
+        if not kaggle_csv.exists():
+            self.skipTest("Downloaded Kaggle CSV is excluded from Git")
         df = load_dataset(kaggle_csv)
         self.assertEqual(len(df), 10000)
         self.assertEqual(len(df.columns), 19)
@@ -84,8 +85,12 @@ class PipelineTests(unittest.TestCase):
     def test_actual_uci_target_harmonization_preserves_three_classes_and_binary(self):
         base_dir = Path(__file__).resolve().parent.parent
         mapping_file = base_dir / "config" / "feature_mapping.json"
-        uci_csv = base_dir / "data" / "raw" / "student_dropout_dataset_cleaned.csv"
-        self.assertTrue(uci_csv.exists(), "data/raw/student_dropout_dataset_cleaned.csv does not exist")
+        raw_dir = base_dir / "data" / "raw"
+        uci_csv = raw_dir / "uci_portuguese.csv"
+        if not uci_csv.exists():
+            uci_csv = raw_dir / "student_dropout_dataset_cleaned.csv"
+        if not uci_csv.exists():
+            self.skipTest("Downloaded UCI CSV is excluded from Git")
 
         # 1. Preserved mode: 3 classes
         res_pres = integrate_datasets([{"path": str(uci_csv), "source": "uci_portuguese"}],
@@ -113,6 +118,8 @@ class PipelineTests(unittest.TestCase):
         base_dir = Path(__file__).resolve().parent.parent
         mapping_file = base_dir / "config" / "feature_mapping.json"
         kaggle_csv = base_dir / "data" / "raw" / "kaggle_synthetic.csv"
+        if not kaggle_csv.exists():
+            self.skipTest("Downloaded Kaggle CSV is excluded from Git")
 
         with tempfile.TemporaryDirectory() as td:
             temp_path = Path(td)

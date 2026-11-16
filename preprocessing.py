@@ -27,7 +27,7 @@ def split_and_transform(csv_path: Path, target: str, output_dir: Path, test_size
     data = frame.loc[frame[target].notna()].copy()
     y = data.pop(target)
     # Remove other target columns to prevent accidental label leakage.
-    data = data.drop(columns=[c for c in ("target_original", "target_binary_dropout") if c in data], errors="ignore")
+    data = data.drop(columns=[c for c in ("target_original", "target_binary_dropout", "Student_ID") if c in data], errors="ignore")
     # Source is retained for stratification/reporting, but excluded from model inputs by default.
     source = data.pop("source") if "source" in data else None
     stratify = y if y.nunique() > 1 and y.value_counts().min() >= 2 else None

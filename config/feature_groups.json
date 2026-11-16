@@ -1,0 +1,13 @@
+{
+  "description": "Feature availability for the proposal's stage-wise and ablation experiments. Targets and Student_ID are excluded.",
+  "uci_portuguese": {
+    "enrollment": ["Marital status", "Application mode", "Application order", "Course", "Daytime/evening attendance", "Previous qualification", "Previous qualification (grade)", "Nacionality", "Mother's qualification", "Father's qualification", "Mother's occupation", "Father's occupation", "Admission grade", "Displaced", "Educational special needs", "Debtor", "Tuition fees up to date", "Gender", "Scholarship holder", "Age at enrollment", "International", "Unemployment rate", "Inflation rate", "GDP"],
+    "first_semester": ["Curricular units 1st sem (credited)", "Curricular units 1st sem (enrolled)", "Curricular units 1st sem (evaluations)", "Curricular units 1st sem (approved)", "Curricular units 1st sem (grade)", "Curricular units 1st sem (without evaluations)"],
+    "second_semester": ["Curricular units 2nd sem (credited)", "Curricular units 2nd sem (enrolled)", "Curricular units 2nd sem (evaluations)", "Curricular units 2nd sem (approved)", "Curricular units 2nd sem (grade)", "Curricular units 2nd sem (without evaluations)"]
+  },
+  "kaggle_synthetic": {
+    "background": ["Age", "Gender", "Family_Income", "Scholarship", "Department", "Parental_Education"],
+    "behavioral": ["Internet_Access", "Study_Hours_per_Day", "Attendance_Rate", "Assignment_Delay_Days", "Travel_Time_Minutes", "Part_Time_Job", "Stress_Index"],
+    "academic": ["GPA", "Semester_GPA", "CGPA", "Semester"]
+  }
+}

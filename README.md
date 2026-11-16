@@ -1,4 +1,10 @@
-# EduGuard – Dropout Prediction and Supervised Machine Learning (Member 3)
+# EduGuard – Student Dropout Early-Warning System
+
+## Data dashboard and EDA (Member 1)
+
+The FastAPI landing page provides dataset uploads, quality profiling, outcome charts, and comparison views. See the [dashboard guide](docs/member1_eda_dashboard.md), [measured EDA findings](docs/eda_findings.md), [notebooks](notebooks/), and [feature-group handoff](config/feature_groups.json). Downloaded CSVs and executed notebook outputs are kept under `data/` and excluded from Git. Run `.venv/bin/python scripts/run_eda.py` after downloading the two source files to regenerate report figures.
+
+## Supervised learning plan (Member 3)
 
 - **Logistic Regression**
 - **K-Nearest Neighbours (KNN)**

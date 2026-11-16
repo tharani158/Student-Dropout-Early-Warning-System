@@ -2,9 +2,9 @@
 
 ## 1. Data Identity and Source Specifications
 
-The project utilizes two primary dataset sources:
+The project utilizes two primary dataset sources. The files were inspected on 2026-11-16; [EDA findings](eda_findings.md) record observed counts and checksums.
 
-1. **UCI Portuguese Higher Education Dataset (`student_dropout_dataset_cleaned.csv`)**
+1. **UCI Portuguese Higher Education Dataset (`uci_portuguese.csv` after parsing the official semicolon-delimited file)**
    - **Source:** UCI Machine Learning Repository Dataset ID 697 (*Predict students' dropout and academic success*, Realinho et al., 2021).
    - **Dimensions:** 4,424 instances, 37 attributes.
    - **Characteristics:** Real-world higher education registry data from Portugal (2008–2019). Zero missing values. Zero duplicate rows.
@@ -13,7 +13,7 @@ The project utilizes two primary dataset sources:
 
 2. **Kaggle Synthetic Dropout Dataset (`kaggle_synthetic.csv`)**
    - **Source:** Kaggle (*Student Dropout Prediction Dataset*, meharshanali).
-   - **Origin:** Converted from the raw Excel workbook (`student_dropout_dataset_v3 (2).csv.xlsx`) to a verified CSV format, preserving the original workbook unchanged.
+   - **Origin:** The linked public archive contained `student_dropout_dataset_v3.csv`; it was saved locally as `kaggle_synthetic.csv`.
    - **Dimensions:** 10,000 instances, 19 attributes.
    - **Characteristics:** Artificially generated student observations. 2,011 missing values across 4 features (`Family_Income`: 500, `Study_Hours_per_Day`: 500, `Stress_Index`: 500, `Parental_Education`: 511). Zero duplicate rows.
    - **Target:** Binary outcome: `0` (retained/non-dropout; 7,646; 76.5%) and `1` (dropout; 2,354; 23.5%).
@@ -35,7 +35,7 @@ The two datasets represent fundamentally distinct student populations, feature s
    - UCI-alone (3-class preserved target, and binary dropout vs graduate).
    - Kaggle-alone (binary dropout).
 2. **Integrated Harmonization (Exploratory / Secondary):** When both datasets are integrated via `/api/integrate`:
-   - Features are aligned to common concepts (`age`, `gender`, `scholarship`, `overall_academic_score`, `latest_semester_score`, `score_trend`, `engagement_rate`).
+   - The conservative executable mapping includes `age`, `scholarship`, fixed-scale academic scores, and source-specific engagement/financial fields. Gender, parental education, and score trend remain unmapped pending semantic verification.
    - The provenance attribute `source` (`uci_portuguese` vs `kaggle_synthetic`) is strictly attached to every row and excluded from model inputs by default.
    - Transfer experiments and subgroup analyses can evaluate cross-dataset generalizability.
 
@@ -65,8 +65,8 @@ Previous implementations used global percentile ranking (`raw[c].rank(pct=True)`
 
 **Current Leakage-Free Implementation:**
 - All feature derivations in `pipeline.py` operate on row-level arithmetic within a single student's record ($row_i$):
-  - `overall_academic_score`: Row-level mean of Semester 1 and Semester 2 grades.
-  - `score_trend`: Row-level difference (`Semester 2 grade` minus `Semester 1 grade` for UCI; `Semester_GPA` minus `CGPA` for Kaggle).
+  - `overall_academic_score`: Kaggle CGPA divided by 4; UCI row-level mean of Semester 1 and Semester 2 grades divided by 20.
+  - `latest_semester_score`: The latest score divided by its fixed grading-scale maximum.
   - `financial_stress`: Row-level logical condition (`Debtor == 1` OR `Tuition fees up to date == 0`).
 - No student record depends on another student record during feature extraction.
 
