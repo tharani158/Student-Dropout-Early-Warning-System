@@ -76,7 +76,7 @@ def inspect_dataframe(frame: pd.DataFrame) -> dict[str, Any]:
 def dataset_metadata(dataset_id: str, filename: str, source: str, path: Path, size: int,
                      frame: pd.DataFrame, validation: dict[str, Any]) -> dict[str, Any]:
     return {"id": dataset_id, "filename": filename, "source": source, "path": str(path.resolve()),
-            "size_bytes": size, "uploaded_at": pd.Timestamp.utcnow().isoformat(),
+            "size_bytes": size, "uploaded_at": pd.Timestamp.now("UTC").isoformat(),
             "rows": len(frame), "columns": len(frame.columns), "column_names": list(frame.columns),
             "statistics": frame.describe(include="all").fillna("").to_dict(), "validation": validation}
 
@@ -186,6 +186,17 @@ def _derive_feature(raw: pd.DataFrame, columns: list[str], spec: dict[str, Any])
         debtor = pd.to_numeric(raw[columns[0]], errors="coerce").eq(1)
         fees_late = pd.to_numeric(raw[columns[1]], errors="coerce").eq(0)
         return (debtor | fees_late).astype("int8")
+    if operation == "yes_no":
+        normalized = raw[columns[0]].astype("string").str.strip().str.lower()
+        unknown = normalized.notna() & ~normalized.isin(["yes", "no"])
+        if unknown.any():
+            raise DatasetError(f"Unexpected yes/no value in {columns[0]}: {normalized[unknown].iloc[0]}")
+        return normalized.map({"yes": 1, "no": 0}).astype("Int8")
+    if operation == "percentage":
+        result = values[0] / 100
+        if result.dropna().lt(0).any() or result.dropna().gt(1).any():
+            raise DatasetError(f"Percentage outside 0–100 in {columns[0]}")
+        return result
     raise DatasetError(f"Unsupported feature operation: {operation}")
 
 

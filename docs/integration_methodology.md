@@ -2,7 +2,7 @@
 
 ## Data identity
 
-The group proposal cites [Kaggle Student dropout prediction dataset](https://www.kaggle.com/datasets/meharshanali/student-dropout-prediction-dataset) (10,000 records) and [UCI dataset 697](https://archive.ics.uci.edu/dataset/697/predict%2Bstudents%2Bdropout%2Band%2Bacademic%2Bsuccess) (4,424 instances, 36 features, no missing values on the repository page, three classes). The separate `download_datasets.py` script obtains both files and records local schema/quality reports. Record access date, downloaded version and checksums when collecting final reproducibility evidence. The Kaggle page schema must be confirmed from the downloaded CSV.
+The group proposal cites [Kaggle Student dropout prediction dataset](https://www.kaggle.com/datasets/meharshanali/student-dropout-prediction-dataset) (10,000 records) and [UCI dataset 697](https://archive.ics.uci.edu/dataset/697/predict%2Bstudents%2Bdropout%2Band%2Bacademic%2Bsuccess) (4,424 instances, 36 features and three classes). Both downloaded files were inspected on 2026-11-16; see [observed findings and checksums](eda_findings.md). The separate `download_datasets.py` script can obtain both files and record a local schema report. Reinspect the schema when either source changes version.
 
 ## Processing sequence
 

@@ -1,4 +1,8 @@
-# EduGuard dataset management (Member 2)
+# EduGuard student dropout data workspace
+
+Member 1 dashboard, profiling API, EDA notebook and report workflow: [docs/member1_eda_dashboard.md](docs/member1_eda_dashboard.md). The dashboard is the app's landing page; dataset upload and integration remain available in the sidebar.
+
+The two cited datasets have been inspected. See [real-data findings](docs/eda_findings.md), [EDA notebooks](notebooks/), and [proposal-aligned feature groups](config/feature_groups.json). Downloaded CSVs and executed notebook outputs stay under `data/` and are excluded from Git. Run `.venv/bin/python scripts/run_eda.py` after downloading both files to regenerate report figures.
 
 This module provides CSV upload and validation, metadata and preview APIs, source-aware schema harmonisation, row-wise concatenation, export, and a leakage-aware preprocessing entry point. The brief cites [Kaggle's Student dropout prediction dataset](https://www.kaggle.com/datasets/meharshanali/student-dropout-prediction-dataset) (10,000 synthetic records) and [UCI dataset 697](https://archive.ics.uci.edu/dataset/697/predict%2Bstudents%2Bdropout%2Band%2Bacademic%2Bsuccess) (4,424 Portuguese higher-education records, three classes). `download_datasets.py` downloads both and writes `data/raw/inspection_report.json` with observed columns and label counts. Kaggle access may require account consent/credentials.
 
@@ -43,9 +47,9 @@ Integration request example:
 
 ## Dataset preparation and mapping
 
-Edit `config/feature_mapping.json` to use the exact source column headers. The UCI profile includes proposal-aligned features: age, gender, scholarship, higher parental qualification, within-source grade percentiles, semester percentile trend, engagement proxy, and financial stress flag. Percentile ranks are computed within each source independently because grading scales differ. A feature should only be mapped when its definition matches; otherwise set it to null/omit it and document the difference. The `source` field is provenance, not a student identifier.
+`config/feature_mapping.json` now uses headers observed in the downloaded Kaggle v3 and UCI files. It maps age, scholarship and within-source academic percentiles. Gender and parental-education codes are left unmapped because their meanings differ. A feature should only be mapped when its definition matches. The `source` field is provenance, not a student identifier.
 
-The Kaggle source is identified by the brief, but its page does not provide a readable schema through this environment. Use the downloader's local inspection report (or the uploaded dataset preview) and replace its target/feature aliases only after inspecting its exact headers and data dictionary. Do not guess labels, columns, or equivalence.
+The downloaded Kaggle file has 10,000 rows and a binary `Dropout` target (0/1). UCI has 4,424 rows and a three-class `Target`. See [measured EDA findings](docs/eda_findings.md). Recheck the mapping if either source file changes version.
 
 Validation reports row and column counts, inferred dtypes, missingness, unique values, duplicate records, and warnings. Duplicate rows are reported but not silently removed. Invalid file type, blank/duplicate headers, empty files, unreadable CSVs, and uploads over 20 MB are rejected.
 
@@ -71,7 +75,7 @@ For source-balanced/transfer experiments, create splits stratified by both sourc
 5. Concatenate rows, retain outcome labels by default, and export a processed CSV plus original/source and combined statistics.
 6. Fit imputers, encoders, scaling, feature selection and resampling on training folds only. Compare source-specific and pooled results; report cross-source transfer separately.
 
-The proposal's mapping table provides a starting point, not proof that two similarly named fields are equivalent. The Kaggle dataset identity and its exact schema remain to be filled in before a scientifically defensible combined experiment can be produced.
+The proposal's mapping table provides a starting point, not proof that two similarly named fields are equivalent. Report pooled binary results alongside source-specific metrics and interpret the synthetic Kaggle source separately from UCI.
 
 ## Deliverables in this module
 
