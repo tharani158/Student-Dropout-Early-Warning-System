@@ -16,6 +16,7 @@ from pipeline import (
     DATA_DIR, MAX_UPLOAD_BYTES, DatasetError, dataset_metadata, integrate_datasets,
     inspect_dataframe, load_dataset, validate_upload,
 )
+from member4_analytics.main import router as member4_analytics_router
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = DATA_DIR / "uploads"
@@ -24,6 +25,8 @@ META_FILE = DATA_DIR / "metadata.json"
 
 app = FastAPI(title="EduGuard Dataset Management API", version="1.0.0")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.mount("/member4/static", StaticFiles(directory=BASE_DIR / "member4_analytics" / "static"), name="member4-static")
+app.include_router(member4_analytics_router)
 
 
 def read_metadata() -> dict[str, Any]:
