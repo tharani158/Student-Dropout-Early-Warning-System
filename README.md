@@ -1,7 +1,5 @@
 # EduGuard – Dropout Prediction and Supervised Machine Learning (Member 3)
 
-This module is responsible for developing the student dropout prediction system using supervised machine learning. It uses the prepared datasets from Member 2's dataset management module to train, evaluate, compare, and deploy two machine learning algorithms:
-
 - **Logistic Regression**
 - **K-Nearest Neighbours (KNN)**
 
