@@ -5,28 +5,37 @@
     "gender": "Gender",
     "scholarship": "Scholarship holder",
     "parental_education": "Parental education level",
-    "overall_academic_score": "Within-source percentile/rank, not raw GPA",
-    "latest_semester_score": "Within-source percentile/rank",
-    "score_trend": "Latest semester percentile minus earlier semester percentile",
-    "engagement_rate": "Attendance or a documented participation proxy",
-    "financial_stress_flag": "Documented financial indicator",
+    "overall_academic_score": "Within-source academic performance summary",
+    "latest_semester_score": "Most recent academic performance",
+    "score_trend": "Recent performance minus earlier / overall performance",
+    "engagement_rate": "Attendance rate or non-evaluation absence proxy",
+    "financial_stress_flag": "Documented financial indicator (null if unavailable)",
     "source": "Dataset provenance"
   },
   "datasets": {
     "kaggle_synthetic": {
-      "target": "REPLACE_WITH_OUTCOME_COLUMN",
+      "target": "Dropout",
       "features": {
-        "age": "REPLACE_WITH_AGE_COLUMN",
-        "gender": "REPLACE_WITH_GENDER_COLUMN",
-        "scholarship": "REPLACE_WITH_SCHOLARSHIP_COLUMN",
-        "parental_education": "REPLACE_WITH_PARENTAL_EDUCATION_COLUMN",
-        "overall_academic_score": "REPLACE_WITH_CGPA_COLUMN",
-        "latest_semester_score": "REPLACE_WITH_SEMESTER_GPA_COLUMN",
-        "score_trend": {"columns": ["REPLACE_WITH_SEMESTER_GPA_COLUMN", "REPLACE_WITH_CGPA_COLUMN"], "operation": "difference"},
-        "engagement_rate": "REPLACE_WITH_ATTENDANCE_COLUMN",
-        "financial_stress_flag": "REPLACE_WITH_FINANCIAL_STRESS_COLUMN"
+        "age": "Age",
+        "gender": "Gender",
+        "scholarship": "Scholarship",
+        "parental_education": "Parental_Education",
+        "overall_academic_score": "CGPA",
+        "latest_semester_score": "Semester_GPA",
+        "score_trend": {
+          "columns": [
+            "Semester_GPA",
+            "CGPA"
+          ],
+          "operation": "difference"
+        },
+        "engagement_rate": "Attendance_Rate",
+        "financial_stress_flag": null
       },
-      "binary_target": {"Dropout": 1, "Enrolled": 0, "Graduate": 0}
+      "binary_target": {
+        "0": 0,
+        "1": 1
+      }
     },
     "uci_portuguese": {
       "target": "Target",
@@ -34,18 +43,52 @@
         "age": "Age at enrollment",
         "gender": "Gender",
         "scholarship": "Scholarship holder",
-        "parental_education": {"columns": ["Mother's qualification", "Father's qualification"], "operation": "max"},
-        "overall_academic_score": {"columns": ["Curricular units 1st sem (grade)", "Curricular units 2nd sem (grade)"], "operation": "percentile_mean"},
-        "latest_semester_score": {"columns": ["Curricular units 2nd sem (grade)"], "operation": "single_percentile"},
-        "score_trend": {"columns": ["Curricular units 2nd sem (grade)", "Curricular units 1st sem (grade)"], "operation": "percentile_difference"},
-        "engagement_rate": {"columns": ["Curricular units 2nd sem (without evaluations)", "Curricular units 2nd sem (enrolled)"], "operation": "one_minus_ratio"},
-        "financial_stress_flag": {"columns": ["Debtor", "Tuition fees up to date"], "operation": "financial_stress"}
+        "parental_education": {
+          "columns": [
+            "Mother's qualification",
+            "Father's qualification"
+          ],
+          "operation": "max"
+        },
+        "overall_academic_score": {
+          "columns": [
+            "Curricular units 1st sem (grade)",
+            "Curricular units 2nd sem (grade)"
+          ],
+          "operation": "mean"
+        },
+        "latest_semester_score": "Curricular units 2nd sem (grade)",
+        "score_trend": {
+          "columns": [
+            "Curricular units 2nd sem (grade)",
+            "Curricular units 1st sem (grade)"
+          ],
+          "operation": "difference"
+        },
+        "engagement_rate": {
+          "columns": [
+            "Curricular units 2nd sem (without evaluations)",
+            "Curricular units 2nd sem (enrolled)"
+          ],
+          "operation": "one_minus_ratio"
+        },
+        "financial_stress_flag": {
+          "columns": [
+            "Debtor",
+            "Tuition fees up to date"
+          ],
+          "operation": "financial_stress"
+        }
       },
-      "binary_target": {"Dropout": 1, "Enrolled": 0, "Graduate": 0}
+      "binary_target": {
+        "Dropout": 1,
+        "Graduate": 0,
+        "Enrolled": null
+      }
     }
   },
   "target_policy": {
-    "preserve": "Keep each original outcome string. This is the default and preserves the UCI three-class experiment.",
-    "binary_dropout": "Create a separate binary target from explicitly listed source labels. Never overwrite target_original."
+    "preserve": "Keep each original outcome string. This preserves the UCI three-class experiment (Graduate, Dropout, Enrolled) and Kaggle binary outcomes (0, 1).",
+    "binary_dropout": "Create a separate binary target. For Kaggle, 0 stays 0 and 1 stays 1. For UCI, Dropout maps to 1, Graduate to 0, and Enrolled to null (unresolved; excluded from binary dropout training to avoid incorrectly conflating active students with graduates). Never overwrite target_original."
   }
 }

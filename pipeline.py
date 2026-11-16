@@ -125,7 +125,8 @@ def integrate_datasets(items: list[dict[str, Any]], mapping_path: Path,
         if target_mode == "binary_dropout":
             labels_cfg = source_cfg.get("binary_target", {})
             lookup = {_key(str(k)): v for k, v in labels_cfg.items()}
-            mapped["target_binary_dropout"] = label.map(lambda v: lookup.get(_key(str(v))) if pd.notna(v) else pd.NA)
+            mapped_vals = [lookup.get(_key(str(v))) if pd.notna(v) else None for v in label]
+            mapped["target_binary_dropout"] = pd.Series(mapped_vals, index=raw.index, dtype="Int64")
             unknown = sorted(set(label.dropna().astype(str)) - set(str(k) for k in labels_cfg))
             # Case/space-insensitive matching is handled by the normalized lookup.
             if unknown and any(_key(v) not in lookup for v in unknown):
@@ -142,11 +143,13 @@ def integrate_datasets(items: list[dict[str, Any]], mapping_path: Path,
     combined = pd.concat(frames, ignore_index=True, sort=False)
     combined = add_missingness_flags(combined)
     target_column = "target_binary_dropout" if target_mode == "binary_dropout" else "target_original"
+    target_counts = {("null" if pd.isna(k) or k is pd.NA else str(k)): int(v)
+                     for k, v in combined[target_column].value_counts(dropna=False).items()}
     return {"data": combined, "mapping": mappings, "statistics": {"sources": reports,
             "combined_rows": len(combined), "combined_columns": len(combined.columns),
             "missing_by_column": combined.isna().sum().astype(int).to_dict(),
             "target_column": target_column,
-            "target_counts": combined[target_column].astype("string").value_counts(dropna=False).to_dict()}}
+            "target_counts": target_counts}}
 
 
 def add_missingness_flags(frame: pd.DataFrame) -> pd.DataFrame:
@@ -169,6 +172,10 @@ def _derive_feature(raw: pd.DataFrame, columns: list[str], spec: dict[str, Any])
         return pd.concat(values, axis=1).max(axis=1)
     if operation == "sum":
         return pd.concat(values, axis=1).sum(axis=1, min_count=1)
+    if operation == "mean":
+        return pd.concat(values, axis=1).mean(axis=1)
+    if operation == "first":
+        return values[0]
     if operation == "difference":
         return values[0] - values[1]
     if operation == "ratio":
