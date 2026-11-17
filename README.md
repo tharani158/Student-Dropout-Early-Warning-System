@@ -1,113 +1,68 @@
-# EduGuard – Student Dropout Early-Warning System
+# EduGuard dataset management (Member 2)
 
-## Data dashboard and EDA (Member 1)
+This module provides CSV upload and validation, metadata and preview APIs, source-aware schema harmonisation, row-wise concatenation, export, and a leakage-aware preprocessing entry point. The brief cites [Kaggle's Student dropout prediction dataset](https://www.kaggle.com/datasets/meharshanali/student-dropout-prediction-dataset) (10,000 synthetic records) and [UCI dataset 697](https://archive.ics.uci.edu/dataset/697/predict%2Bstudents%2Bdropout%2Band%2Bacademic%2Bsuccess) (4,424 Portuguese higher-education records, three classes). `download_datasets.py` downloads both and writes `data/raw/inspection_report.json` with observed columns and label counts. Kaggle access may require account consent/credentials.
 
-The FastAPI landing page provides dataset uploads, quality profiling, outcome charts, and comparison views. See the [dashboard guide](docs/member1_eda_dashboard.md), [measured EDA findings](docs/eda_findings.md), [notebooks](notebooks/), and [feature-group handoff](config/feature_groups.json). Downloaded CSVs and executed notebook outputs are kept under `data/` and excluded from Git. Run `.venv/bin/python scripts/run_eda.py` after downloading the two source files to regenerate report figures.
+## Run locally
 
-## Supervised learning plan (Member 3)
-
-- **Logistic Regression**
-- **K-Nearest Neighbours (KNN)**
-
-The objective is to identify students who may be at risk of dropping out and provide interpretable prediction results to support early intervention.
-
-## Responsibilities
-
-### 1. Dataset Preparation for Model Training
-
-- Inspect the prepared datasets and verify their target labels and feature columns.
-- Use source-specific datasets for the initial experiments because the UCI and Kaggle datasets have different schemas and target definitions.
-- Select appropriate input features and exclude identifiers and target-related columns from model training.
-- Handle missing values, categorical features, and numerical scaling through fitted preprocessing pipelines.
-- Use stratified training and testing splits where appropriate.
-- Prevent data leakage by fitting preprocessing steps using training data only.
-
-### 2. Machine Learning Model Development
-
-Develop and train the following supervised learning algorithms:
-
-**Logistic Regression**
-
-- Train a classification model for student dropout prediction.
-- Generate class predictions and prediction probabilities.
-- Evaluate model performance using appropriate classification metrics.
-
-**K-Nearest Neighbours (KNN)**
-
-- Train a KNN classification model.
-- Experiment with suitable values of K.
-- Apply feature scaling because KNN is distance-based.
-- Evaluate and compare its performance with Logistic Regression.
-
-### 3. Model Evaluation and Comparison
-
-Evaluate both models using:
-
-- Accuracy
-- Precision
-- Recall
-- F1-score
-- ROC-AUC, where applicable
-- Confusion Matrix
-- Classification Report
-
-Compare the models using consistent data splits and evaluation procedures. Pay particular attention to dropout-class precision and recall rather than relying only on overall accuracy.
-
-### 4. Dropout Risk Prediction
-
-The prediction system will:
-
-- Accept student academic and relevant demographic information.
-- Allow selection between Logistic Regression and KNN.
-- Generate a dropout prediction.
-- Display the predicted class and probability, where supported.
-- Categorise students into Low, Medium, or High risk using documented thresholds.
-- Provide results in a clear format for users.
-
-Risk thresholds must be selected and documented using validation data rather than arbitrarily chosen.
-
-### 5. Model Persistence and Backend Integration
-
-- Save trained models together with their fitted preprocessing pipelines.
-- Maintain model versions and associated evaluation metrics.
-- Load the selected model for prediction.
-- Integrate the prediction functionality with the FastAPI backend.
-- Validate incoming student feature data before generating predictions.
-- Provide APIs for prediction, model selection, prediction history, and model evaluation.
-
-### 6. Frontend Integration
-
-The prediction interface will include:
-
-- Student feature-input form.
-- Machine learning model selection.
-- Dropout prediction results.
-- Dropout probability and risk category.
-- Prediction history.
-- Model performance comparison.
-- Confusion matrices and evaluation charts.
-
-## Proposed Module Structure
-
-```text
-ml/
-├── train_uci.py
-├── train_kaggle.py
-├── evaluate.py
-├── model_comparison.py
-└── predict.py
-
-models/
-├── logistic_regression/
-└── knn/
-
-tests/
-└── test_models.py
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
-The structure may be adjusted as implementation progresses.
+Open http://127.0.0.1:8000. Uploaded files and metadata are stored under `data/`; integrated outputs are stored under `data/processed/`.
 
-## Training and Evaluation Methodology
+Download and inspect the cited datasets when credentials and network access are available:
+
+```powershell
+python download_datasets.py
+```
+
+The script saves both CSVs in `data/raw/` and a schema/quality report. If Kaggle access fails, download its CSV from the linked page and place it at `data/raw/kaggle_synthetic.csv`.
+
+## API
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/health` | API status |
+| GET | `/api/datasets` | Uploaded dataset metadata and validation summaries |
+| POST | `/api/datasets/upload?source=kaggle_synthetic` | Upload CSV (`multipart/form-data`, field `file`); source may be `uci_portuguese` or `unspecified` |
+| GET | `/api/datasets/{id}/preview?limit=20` | Preview up to 100 rows |
+| GET | `/api/datasets/{id}/validation` | Validation result |
+| POST | `/api/integrate` | Process one mapped source or integrate two mapped sources; JSON has `dataset_ids` and optional `target_mode` |
+| GET | `/api/exports/{filename}` | Download integrated CSV |
+
+Integration request example:
+
+```json
+{"dataset_ids":["first-upload-id","second-upload-id"],"target_mode":"preserve"}
+```
+
+`target_mode` is `preserve` by default and retains source labels as strings in `target_original`, including the UCI three-class outcome. Select a single UCI dataset to create a standalone three-class processed export; select two datasets for pooled row-wise integration. `binary_dropout` creates a separate binary target from explicitly configured label mappings; it does not replace the original target. The app never infers student identity or joins by row number.
+
+## Dataset preparation and mapping
+
+Edit `config/feature_mapping.json` to use the exact source column headers. The UCI profile includes proposal-aligned features: age, gender, scholarship, higher parental qualification, within-source grade percentiles, semester percentile trend, engagement proxy, and financial stress flag. Percentile ranks are computed within each source independently because grading scales differ. A feature should only be mapped when its definition matches; otherwise set it to null/omit it and document the difference. The `source` field is provenance, not a student identifier.
+
+The Kaggle source is identified by the brief, but its page does not provide a readable schema through this environment. Use the downloader's local inspection report (or the uploaded dataset preview) and replace its target/feature aliases only after inspecting its exact headers and data dictionary. Do not guess labels, columns, or equivalence.
+
+Validation reports row and column counts, inferred dtypes, missingness, unique values, duplicate records, and warnings. Duplicate rows are reported but not silently removed. Invalid file type, blank/duplicate headers, empty files, unreadable CSVs, and uploads over 20 MB are rejected.
+
+## Preprocessing without leakage
+
+Integration does not impute or scale the full combined file. Run the training-preparation CLI after integration:
+
+```powershell
+python preprocessing.py data\processed\integrated_<id>.csv target_original --output data\experiments\uci_three_class
+python preprocessing.py data\processed\integrated_<id>.csv target_binary_dropout --output data\experiments\binary_dropout
+```
+
+The first command is created by selecting only the UCI upload in the integration page and keeping `preserve` mode; replace `<id>` with the export filename. Do not use `target_original` on a mixed multi-source target if source label semantics differ. For supervised comparison, prepare each source separately, then use `target_binary_dropout` only for the documented binary experiment. The script stratifies where feasible, holds out 20% with a fixed seed, fits numeric median imputation, categorical mode imputation, one-hot encoding, and scaling on training rows only, and transforms the test rows with that fitted transformer. It excludes `source` from model features by default and saves it separately for source-specific metrics. Keep the test set untouched through model and threshold selection.
+
+For source-balanced/transfer experiments, create splits stratified by both source and target, then run source-only train/test transfers. Never use target columns, source identifiers as predictive features (unless a documented ablation explicitly requests them), or post-outcome fields in enrollment-stage models. Use SMOTE only inside training folds.
+
+## Integration methodology
 
 1. Verify the prepared dataset and its target labels.
 2. Conduct exploratory analysis and inspect class distributions.

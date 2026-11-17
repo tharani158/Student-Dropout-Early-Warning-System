@@ -6,9 +6,14 @@ async function refresh() {
     const {datasets=[]}=await api('/api/datasets');
     $('#dataset-count').textContent=datasets.length;
     $('#record-count').textContent=datasets.reduce((n,d)=>n+d.rows,0).toLocaleString();
+<<<<<<< Updated upstream
     $('#dataset-list').innerHTML=datasets.length?datasets.map(d=>`<article class="dataset-card"><div><b>${escapeHtml(d.filename)}</b><small>${escapeHtml(d.source)} · ${Math.ceil(d.size_bytes/1024).toLocaleString()} KB</small></div><span class="numbers">${d.rows.toLocaleString()} rows · ${d.columns} columns</span><span class="badge">Validated</span></article>`).join(''):'<div class="empty">No datasets uploaded yet.</div>';
     for(const id of ['dataset-a','dataset-b','preview-select','validation-select','dashboard-select','profile-select']) { const el=$(`#${id}`); const placeholder=id.includes('select')?'Choose dataset':'Select dataset'; const selected=el.value; el.innerHTML=`<option value="">${placeholder}</option>`+datasets.map(d=>`<option value="${d.id}">${escapeHtml(d.filename)} (${escapeHtml(d.source)})</option>`).join(''); if(datasets.some(d=>d.id===selected)) el.value=selected; }
     await refreshDashboard();
+=======
+    $('#dataset-list').innerHTML=datasets.length?datasets.map(d=>`<article class="dataset-card"><div><b>${escapeHtml(d.filename)}</b><small>${escapeHtml(d.source)} · ${Math.ceil(d.size_bytes/1024).toLocaleString()} KB</small></div><span class="numbers">${d.rows.toLocaleString()} rows · ${d.columns} columns</span><span class="badge">Validated</span><button class="button delete-button" type="button" data-delete-id="${escapeHtml(d.id)}" data-delete-name="${escapeHtml(d.filename)}" aria-label="Delete ${escapeHtml(d.filename)}">Delete</button></article>`).join(''):'<div class="empty">No datasets uploaded yet.</div>';
+    for(const id of ['dataset-a','dataset-b','preview-select','validation-select']) { const el=$(`#${id}`); const placeholder=id.includes('select')?'Choose dataset':'Select dataset'; const selected=el.value; el.innerHTML=`<option value="">${placeholder}</option>`+datasets.map(d=>`<option value="${d.id}">${escapeHtml(d.filename)} (${escapeHtml(d.source)})</option>`).join(''); if(datasets.some(d=>d.id===selected)) el.value=selected; }
+>>>>>>> Stashed changes
   } catch(e) { console.error(e); }
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -26,6 +31,7 @@ $('#dropzone').addEventListener('dragover',e=>{e.preventDefault();e.currentTarge
 $('#dropzone').addEventListener('dragleave',e=>e.currentTarget.style.background='');
 $('#dropzone').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.style.background='';upload(e.dataTransfer.files);});
 $('#refresh').addEventListener('click',refresh);
+<<<<<<< Updated upstream
 document.querySelectorAll('.nav[data-page]').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));link.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(`#page-${link.dataset.page}`).classList.add('active');$('#page-title').textContent=link.textContent.trim();history.replaceState(null,'',`#${link.dataset.page}`);if(link.dataset.page==='dashboard')refreshDashboard();}));
 function bar(label,value,max,detail,kind='primary') {return `<div class="bar-row"><div class="bar-label"><b>${escapeHtml(label)}</b><span>${escapeHtml(detail)}</span></div><div class="bar-track"><div class="bar-fill ${kind}" style="width:${Math.max(0,Math.min(100,100*value/Math.max(max,1)))}%"></div></div></div>`;}
 async function refreshDashboard(){
@@ -51,6 +57,29 @@ $('#profile-select').addEventListener('change',async e=>{
   const id=e.target.value;if(!id){$('#profile-table').innerHTML='';return;}
   try{const p=await api(`/api/datasets/${id}/profile`);$('#profile-summary').classList.remove('empty');$('#profile-summary').textContent=`${p.row_count.toLocaleString()} rows · ${p.feature_count} features · ${p.missing_cells} missing cells · ${p.duplicate_rows} duplicate rows. ${p.quality_issues.join(' ')}`;$('#profile-table').innerHTML=`<thead><tr><th>Feature</th><th>Type</th><th>Missing</th><th>Unique</th><th>IQR outliers</th><th>Top values</th></tr></thead><tbody>${p.columns.map(c=>`<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.type)} · ${escapeHtml(c.dtype)}</td><td>${c.missing} (${c.missing_percent}%)</td><td>${c.unique}</td><td>${c.outlier_count??'—'}</td><td>${c.top_values.slice(0,3).map(v=>`${escapeHtml(v.value)}: ${v.count}`).join(' · ')}</td></tr>`).join('')}</tbody>`;}catch(err){$('#profile-summary').textContent=err.message;}
 });
+=======
+$('#dataset-list').addEventListener('click',async e=>{
+  const button=e.target.closest('[data-delete-id]');
+  if(!button)return;
+  const id=button.dataset.deleteId, filename=button.dataset.deleteName;
+  if(!window.confirm(`Delete "${filename}" and its uploaded CSV? This cannot be undone.`))return;
+  const clearPreview=$('#preview-select').value===id, clearValidation=$('#validation-select').value===id;
+  const notice=$('#dataset-status');
+  notice.classList.remove('hidden');
+  button.disabled=true;
+  try{
+    await api(`/api/datasets/${encodeURIComponent(id)}`,{method:'DELETE'});
+    await refresh();
+    statusBox(notice,`${filename} and its uploaded file were deleted.`);
+    if(clearPreview){$('#preview-title').textContent='Select a dataset to preview';$('#preview-table').innerHTML='';}
+    if(clearValidation)$('#validation-results').innerHTML='<div class="empty">Choose an uploaded dataset to see validation details.</div>';
+  }catch(err){
+    statusBox(notice,`Could not delete ${filename}: ${err.message}`,true);
+    button.disabled=false;
+  }
+});
+document.querySelectorAll('.nav[data-page]').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));link.classList.add('active');document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$(`#page-${link.dataset.page}`).classList.add('active');}));
+>>>>>>> Stashed changes
 async function showValidation(id){if(!id)return;const box=$('#validation-results');try{const d=(await api('/api/datasets')).datasets.find(x=>x.id===id);const v=await api(`/api/datasets/${id}/validation`);box.innerHTML=`<div class="validation-item"><b>Dataset</b><small>${escapeHtml(d.filename)} · ${escapeHtml(d.source)}</small></div><div class="validation-item"><b>${v.row_count.toLocaleString()} rows × ${v.column_count} columns</b><small>File size ${(d.size_bytes/1024).toFixed(1)} KB</small></div><div class="validation-item"><b>${v.missing_cells.toLocaleString()} missing cells</b><small>${v.duplicate_rows.toLocaleString()} exact duplicate rows</small></div>${v.columns.map(c=>`<div class="validation-item"><b>${escapeHtml(c.name)}</b><small>${escapeHtml(c.dtype)} · ${c.missing} missing (${c.missing_percent}%) · ${c.unique} unique</small></div>`).join('')}${v.warnings.map(w=>`<div class="validation-item"><b>Warning</b><small>${escapeHtml(w)}</small></div>`).join('')}`;}catch(e){box.innerHTML=`<div class="empty">${escapeHtml(e.message)}</div>`;}}
 $('#validation-select').addEventListener('change',e=>showValidation(e.target.value));
 api('/api/health').then(()=>{$('.api-pill').innerHTML='<i></i> API connected'}).catch(()=>{$('.api-pill').innerHTML='<i style="background:#d45b51"></i> API offline'});

@@ -53,7 +53,13 @@ def _activity(kind: str, description: str) -> None:
 
 
 @app.get("/")
-def index() -> FileResponse:
+@app.get("/login")
+def login_page() -> FileResponse:
+    return FileResponse(BASE_DIR / "static" / "login.html")
+
+
+@app.get("/dashboard")
+def dashboard() -> FileResponse:
     return FileResponse(BASE_DIR / "static" / "index.html")
 
 
@@ -149,6 +155,24 @@ async def upload_dataset(file: UploadFile = File(...), source: str = "unspecifie
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Could not read CSV: {exc}") from exc
+
+
+@app.delete("/api/datasets/{dataset_id}")
+def delete_dataset(dataset_id: str) -> dict[str, str]:
+    state = read_metadata()
+    item = next((x for x in state["datasets"] if x["id"] == dataset_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Dataset not found.")
+
+    path = Path(item["path"]).resolve()
+    if path.parent != UPLOAD_DIR.resolve():
+        raise HTTPException(status_code=500, detail="Dataset storage path is invalid.")
+    if path.exists():
+        path.unlink()
+
+    state["datasets"] = [x for x in state["datasets"] if x["id"] != dataset_id]
+    write_metadata(state)
+    return {"status": "deleted", "id": dataset_id}
 
 
 @app.get("/api/datasets/{dataset_id}/preview")
