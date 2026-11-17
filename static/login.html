@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f8f6">
+  <title>Sign in | EduGuard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/login.css">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-story" aria-label="About EduGuard">
+      <a class="login-brand" href="/dashboard" aria-label="EduGuard workspace">
+        <span class="brand-icon">E</span>
+        <span><b>EduGuard</b><small>EARLY WARNING SYSTEM</small></span>
+      </a>
+      <div class="story-copy">
+        <p class="eyebrow">STUDENT SUCCESS, BUILT ON DATA</p>
+        <h1>See the signals.<br>Support the student.</h1>
+        <p>Bring student data together to help teams spot risk earlier and make more informed decisions.</p>
+      </div>
+      <div class="story-card" aria-hidden="true">
+        <span class="story-mark">↗</span>
+        <div><b>Earlier insight</b><small>Turn data into a clearer picture of student progress.</small></div>
+        <div class="story-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <p class="story-footnote">A student-first approach to academic insight.</p>
+    </section>
+
+    <section class="login-panel">
+      <a class="back-link" href="/dashboard">← Back to workspace</a>
+      <div class="login-card">
+        <span class="login-icon" aria-hidden="true">E</span>
+        <p class="eyebrow">YOUR EDU GUARD WORKSPACE</p>
+        <h2>Welcome back</h2>
+        <p class="login-intro">Enter your details to continue to the dataset workspace.</p>
+        <form id="login-form">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" placeholder="you@school.edu" autocomplete="username" required>
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+            <button id="toggle-password" class="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <button class="button primary login-submit" type="submit">Continue to workspace <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="prototype-note"><b>Design preview only.</b> This form does not verify credentials or secure the API. Any valid email and non-empty password will open the workspace.</p>
+      </div>
+      <p class="login-footer">EduGuard · Student Dropout Early-Warning System</p>
+    </section>
+  </main>
+  <script src="/static/login.js"></script>
+</body>
+</html>
