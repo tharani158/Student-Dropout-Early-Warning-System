@@ -5,10 +5,10 @@
     "gender": "Gender",
     "scholarship": "Scholarship holder",
     "parental_education": "Parental education level",
-    "overall_academic_score": "Within-source academic performance summary",
-    "latest_semester_score": "Most recent academic performance",
-    "score_trend": "Recent performance minus earlier / overall performance",
-    "engagement_rate": "Attendance rate or non-evaluation absence proxy",
+    "overall_academic_score": "Academic score divided by source scale maximum; available only after academic assessment",
+    "latest_semester_score": "Most recent grade divided by source scale maximum",
+    "score_trend": "Unmapped because source definitions differ",
+    "engagement_rate": "Kaggle attendance percentage; UCI proxy is not equivalent",
     "financial_stress_flag": "Documented financial indicator (null if unavailable)",
     "source": "Dataset provenance"
   },
@@ -17,68 +17,29 @@
       "target": "Dropout",
       "features": {
         "age": "Age",
-        "gender": "Gender",
-        "scholarship": "Scholarship",
-        "parental_education": "Parental_Education",
-        "overall_academic_score": "CGPA",
-        "latest_semester_score": "Semester_GPA",
-        "score_trend": {
-          "columns": [
-            "Semester_GPA",
-            "CGPA"
-          ],
-          "operation": "difference"
-        },
-        "engagement_rate": "Attendance_Rate",
+        "gender": null,
+        "scholarship": {"columns": ["Scholarship"], "operation": "yes_no"},
+        "parental_education": null,
+        "overall_academic_score": {"columns": ["CGPA"], "operation": "divide_constant", "divisor": 4},
+        "latest_semester_score": {"columns": ["Semester_GPA"], "operation": "divide_constant", "divisor": 4},
+        "score_trend": null,
+        "engagement_rate": {"columns": ["Attendance_Rate"], "operation": "percentage"},
         "financial_stress_flag": null
       },
-      "binary_target": {
-        "0": 0,
-        "1": 1
-      }
+      "binary_target": {"1": 1, "0": 0}
     },
     "uci_portuguese": {
       "target": "Target",
       "features": {
         "age": "Age at enrollment",
-        "gender": "Gender",
+        "gender": null,
         "scholarship": "Scholarship holder",
-        "parental_education": {
-          "columns": [
-            "Mother's qualification",
-            "Father's qualification"
-          ],
-          "operation": "max"
-        },
-        "overall_academic_score": {
-          "columns": [
-            "Curricular units 1st sem (grade)",
-            "Curricular units 2nd sem (grade)"
-          ],
-          "operation": "mean"
-        },
-        "latest_semester_score": "Curricular units 2nd sem (grade)",
-        "score_trend": {
-          "columns": [
-            "Curricular units 2nd sem (grade)",
-            "Curricular units 1st sem (grade)"
-          ],
-          "operation": "difference"
-        },
-        "engagement_rate": {
-          "columns": [
-            "Curricular units 2nd sem (without evaluations)",
-            "Curricular units 2nd sem (enrolled)"
-          ],
-          "operation": "one_minus_ratio"
-        },
-        "financial_stress_flag": {
-          "columns": [
-            "Debtor",
-            "Tuition fees up to date"
-          ],
-          "operation": "financial_stress"
-        }
+        "parental_education": null,
+        "overall_academic_score": {"columns": ["Curricular units 1st sem (grade)", "Curricular units 2nd sem (grade)"], "operation": "mean_divide_constant", "divisor": 20},
+        "latest_semester_score": {"columns": ["Curricular units 2nd sem (grade)"], "operation": "divide_constant", "divisor": 20},
+        "score_trend": null,
+        "engagement_rate": null,
+        "financial_stress_flag": {"columns": ["Debtor", "Tuition fees up to date"], "operation": "financial_stress"}
       },
       "binary_target": {
         "Dropout": 1,
